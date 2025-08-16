@@ -5,7 +5,7 @@ dotenv.config();
 
 const config: import("hardhat/config").HardhatUserConfig = {
   solidity: {
-    version: "0.8.20", // must match what you deployed with
+    version: "0.8.20",
     settings: { optimizer: { enabled: true, runs: 200 } },
   },
   networks: {
@@ -15,18 +15,18 @@ const config: import("hardhat/config").HardhatUserConfig = {
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
     },
   },
-  sourcify: { enabled: false }, // Sourcify doesn’t support chainId 114
+  sourcify: { enabled: false }, 
   etherscan: {
-    // IMPORTANT: use an OBJECT to trigger legacy v1 per-network mode
+
     apiKey: {
-      "flare-testnet-coston2": "empty" // any non-empty placeholder
+      "flare-testnet-coston2": "empty" 
     },
     customChains: [
       {
         network: "flare-testnet-coston2",
         chainId: 114,
         urls: {
-          apiURL: "https://coston2.testnet.flarescan.com/api",   // Flarescan v1-style API
+          apiURL: "https://coston2.testnet.flarescan.com/api",  
           browserURL: "https://coston2.testnet.flarescan.com"
         }
       }
