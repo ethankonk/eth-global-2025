@@ -1,0 +1,9 @@
+// -> e.g. ["contracts/Mailbox.sol:MailboxDynamic"] or ["contracts/Mailbox.sol:Mailbox"]
+(await artifacts.getAllFullyQualifiedNames()).filter(n => n.includes("Mailbox.sol"))
+await c.sendJson.populateTransaction("0x" + "11".repeat(20), "", "{}");  // should succeed (populate only)
+const c = new ethers.Contract("0xeCA797E6a2D156E93f48aD70D397F5baa613C0d5", abi, (await ethers.getSigners())[0]);
+const abi = ["function sendJson(address,string,string)"];
+// Does it look like your MailboxDynamic?
+// -> should start with "0x60". If it's "0x", that address isn't a contract.
+(await ethers.provider.getCode("0xeCA797E6a2D156E93f48aD70D397F5baa613C0d5")).slice(0,10)
+// Is there bytecode at the address?
