@@ -14,7 +14,7 @@
     "@fortawesome/free-solid-svg-icons": "^6.7.2",
     "@fortawesome/react-fontawesome": "^0.2.3",
     "@headlessui/react": "^2.2.7",
-    "@turnkey/react-wallet-kit": "^1.0.0-beta.0",
+    "@turnkey/react-wallet-kit": "https://pkg.csb.dev/tkhq/sdk/commit/fd7e102f/@turnkey/react-wallet-kit",
     "next": "15.4.6",
     "react": "19.1.0",
     "react-dom": "19.1.0"

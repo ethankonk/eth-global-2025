@@ -74,6 +74,29 @@ export default function RootLayout({
     ui: {
       darkMode: true,
     },
+    walletConfig: {
+      features: {
+        connecting: true,
+      },
+      chains: {
+        ethereum: {
+          native: true,
+          walletConnectNamespaces: ['eip155:1'],
+        },
+        solana: {
+          native: false,
+        },
+      },
+      walletConnect: {
+        projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID!,
+        appMetadata: {
+          name: 'Turnkey Wallet',
+          description: 'A wallet for Turnkey',
+          url: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_URL!,
+          icons: ['/favicon.svg'],
+        },
+      },
+    },
   };
 
   return (
@@ -81,9 +104,6 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen p-6 flex flex-col items-center justify-center relative`}
       >
-        <h1 className="text-4xl font-bold absolute top-6 left-1/2 -translate-x-1/2 z-50">
-          KYC Provider
-        </h1>
         <TurnkeyProvider config={config}>{children}</TurnkeyProvider>
         <footer className="flex gap-[24px] flex-wrap items-center justify-center absolute z-50 bottom-2 left-1/2 -translate-x-1/2">
           <p className="text-neutral-300 flex items-center gap-2">
