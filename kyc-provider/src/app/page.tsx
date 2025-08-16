@@ -11,7 +11,8 @@ import {
   Wallet,
   WalletAccount,
 } from '@turnkey/react-wallet-kit';
-import { use, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { sign } from './actions/sign';
 
 export default function Home() {
   const {
@@ -252,6 +253,20 @@ export default function Home() {
             onClick={handleOnSubmit}
           >
             {formFields.ssn.trim() !== '' ? 'Submit Level 2 KYC' : 'Submit KYC'}
+          </Button>
+          <Button
+            onClick={async () => {
+              // Test with dummy data
+              await sign('0x1234567890123456789012345678901234567890', {
+                name: 'Test User',
+                homeAddress: '123 Test St',
+                country: 'Test Country',
+                state: 'Test State',
+                city: 'Test City',
+              });
+            }}
+          >
+            TEST
           </Button>
           <Button onClick={async () => await logout()}>Log out</Button>
         </div>
