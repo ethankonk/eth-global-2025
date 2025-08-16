@@ -13,6 +13,7 @@ import {
 } from '@turnkey/react-wallet-kit';
 import { useEffect, useMemo, useState } from 'react';
 import { sign } from './actions/sign';
+import { v1SignRawPayloadResult } from '@turnkey/sdk-types';
 
 export default function Home() {
   const {
@@ -110,8 +111,8 @@ export default function Home() {
       addEthereumPrefix: true,
     });
 
-    console.log('KYC payload:', payload);
-    console.log('Signature (hex/base64 per chain impl):', signature);
+    const response = await sign(activeAccount.address, message, signature);
+
   };
 
   return (
@@ -254,20 +255,7 @@ export default function Home() {
           >
             {formFields.ssn.trim() !== '' ? 'Submit Level 2 KYC' : 'Submit KYC'}
           </Button>
-          <Button
-            onClick={async () => {
-              // Test with dummy data
-              await sign('0x1234567890123456789012345678901234567890', {
-                name: 'Test User',
-                homeAddress: '123 Test St',
-                country: 'Test Country',
-                state: 'Test State',
-                city: 'Test City',
-              });
-            }}
-          >
-            TEST
-          </Button>
+
           <Button onClick={async () => await logout()}>Log out</Button>
         </div>
       )}
@@ -296,3 +284,7 @@ function FormInput({
     </div>
   );
 }
+function signJson(address: string, message: string, signature: v1SignRawPayloadResult) {
+  throw new Error('Function not implemented.');
+}
+

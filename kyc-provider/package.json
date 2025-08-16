@@ -14,9 +14,10 @@
     "@fortawesome/free-solid-svg-icons": "^6.7.2",
     "@fortawesome/react-fontawesome": "^0.2.3",
     "@headlessui/react": "^2.2.7",
-    "@turnkey/react-wallet-kit": "https://pkg.csb.dev/tkhq/sdk/commit/fd7e102f/@turnkey/react-wallet-kit",
     "@turnkey/ethers": "^1.2.8",
+    "@turnkey/react-wallet-kit": "https://pkg.csb.dev/tkhq/sdk/commit/fd7e102f/@turnkey/react-wallet-kit",
     "@turnkey/sdk-server": "^4.6.0",
+    "@turnkey/sdk-types": "^0.4.0-beta.0",
     "next": "15.4.6",
     "react": "19.1.0",
     "react-dom": "19.1.0"
