@@ -12,7 +12,7 @@ import type {
   ContractRunner,
   ContractMethod,
   Listener,
-} from "ethers";
+} from 'ethers';
 import type {
   TypedContractEvent,
   TypedDeferredTopicFilter,
@@ -20,19 +20,16 @@ import type {
   TypedLogDescription,
   TypedListener,
   TypedContractMethod,
-} from "./common";
+} from './common';
 
 export interface MailboxInterface extends Interface {
-  getFunction(nameOrSignature: "send"): FunctionFragment;
+  getFunction(nameOrSignature: 'send'): FunctionFragment;
 
-  getEvent(nameOrSignatureOrTopic: "Message"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: 'Message'): EventFragment;
 
-  encodeFunctionData(
-    functionFragment: "send",
-    values: [AddressLike, BytesLike, string]
-  ): string;
+  encodeFunctionData(functionFragment: 'send', values: [AddressLike, BytesLike, string]): string;
 
-  decodeFunctionResult(functionFragment: "send", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'send', data: BytesLike): Result;
 }
 
 export namespace MessageEvent {
@@ -40,14 +37,9 @@ export namespace MessageEvent {
     from: AddressLike,
     to: AddressLike,
     payloadHash: BytesLike,
-    cid: string
+    cid: string,
   ];
-  export type OutputTuple = [
-    from: string,
-    to: string,
-    payloadHash: string,
-    cid: string
-  ];
+  export type OutputTuple = [from: string, to: string, payloadHash: string, cid: string];
   export interface OutputObject {
     from: string;
     to: string;
@@ -69,60 +61,56 @@ export interface Mailbox extends BaseContract {
   queryFilter<TCEvent extends TypedContractEvent>(
     event: TCEvent,
     fromBlockOrBlockhash?: string | number | undefined,
-    toBlock?: string | number | undefined
+    toBlock?: string | number | undefined,
   ): Promise<Array<TypedEventLog<TCEvent>>>;
   queryFilter<TCEvent extends TypedContractEvent>(
     filter: TypedDeferredTopicFilter<TCEvent>,
     fromBlockOrBlockhash?: string | number | undefined,
-    toBlock?: string | number | undefined
+    toBlock?: string | number | undefined,
   ): Promise<Array<TypedEventLog<TCEvent>>>;
 
   on<TCEvent extends TypedContractEvent>(
     event: TCEvent,
-    listener: TypedListener<TCEvent>
+    listener: TypedListener<TCEvent>,
   ): Promise<this>;
   on<TCEvent extends TypedContractEvent>(
     filter: TypedDeferredTopicFilter<TCEvent>,
-    listener: TypedListener<TCEvent>
+    listener: TypedListener<TCEvent>,
   ): Promise<this>;
 
   once<TCEvent extends TypedContractEvent>(
     event: TCEvent,
-    listener: TypedListener<TCEvent>
+    listener: TypedListener<TCEvent>,
   ): Promise<this>;
   once<TCEvent extends TypedContractEvent>(
     filter: TypedDeferredTopicFilter<TCEvent>,
-    listener: TypedListener<TCEvent>
+    listener: TypedListener<TCEvent>,
   ): Promise<this>;
 
   listeners<TCEvent extends TypedContractEvent>(
-    event: TCEvent
+    event: TCEvent,
   ): Promise<Array<TypedListener<TCEvent>>>;
   listeners(eventName?: string): Promise<Array<Listener>>;
-  removeAllListeners<TCEvent extends TypedContractEvent>(
-    event?: TCEvent
-  ): Promise<this>;
+  removeAllListeners<TCEvent extends TypedContractEvent>(event?: TCEvent): Promise<this>;
 
   send: TypedContractMethod<
     [to: AddressLike, payloadHash: BytesLike, cid: string],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
 
-  getFunction<T extends ContractMethod = ContractMethod>(
-    key: string | FunctionFragment
-  ): T;
+  getFunction<T extends ContractMethod = ContractMethod>(key: string | FunctionFragment): T;
 
   getFunction(
-    nameOrSignature: "send"
+    nameOrSignature: 'send',
   ): TypedContractMethod<
     [to: AddressLike, payloadHash: BytesLike, cid: string],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
 
   getEvent(
-    key: "Message"
+    key: 'Message',
   ): TypedContractEvent<
     MessageEvent.InputTuple,
     MessageEvent.OutputTuple,
@@ -130,7 +118,7 @@ export interface Mailbox extends BaseContract {
   >;
 
   filters: {
-    "Message(address,address,bytes32,string)": TypedContractEvent<
+    'Message(address,address,bytes32,string)': TypedContractEvent<
       MessageEvent.InputTuple,
       MessageEvent.OutputTuple,
       MessageEvent.OutputObject

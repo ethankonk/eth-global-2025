@@ -12,7 +12,7 @@ import type {
   ContractRunner,
   ContractMethod,
   Listener,
-} from "ethers";
+} from 'ethers';
 import type {
   TypedContractEvent,
   TypedDeferredTopicFilter,
@@ -20,39 +20,26 @@ import type {
   TypedLogDescription,
   TypedListener,
   TypedContractMethod,
-} from "./common";
+} from './common';
 
 export interface MailboxDynamicInterface extends Interface {
-  getFunction(nameOrSignature: "sendJson" | "sendKV"): FunctionFragment;
+  getFunction(nameOrSignature: 'sendJson' | 'sendKV'): FunctionFragment;
 
-  getEvent(nameOrSignatureOrTopic: "MessageJSON" | "MessageKV"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: 'MessageJSON' | 'MessageKV'): EventFragment;
 
+  encodeFunctionData(functionFragment: 'sendJson', values: [AddressLike, string, string]): string;
   encodeFunctionData(
-    functionFragment: "sendJson",
-    values: [AddressLike, string, string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "sendKV",
-    values: [AddressLike, string, string[], string[]]
+    functionFragment: 'sendKV',
+    values: [AddressLike, string, string[], string[]],
   ): string;
 
-  decodeFunctionResult(functionFragment: "sendJson", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "sendKV", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'sendJson', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'sendKV', data: BytesLike): Result;
 }
 
 export namespace MessageJSONEvent {
-  export type InputTuple = [
-    from: AddressLike,
-    to: AddressLike,
-    schema: string,
-    json: string
-  ];
-  export type OutputTuple = [
-    from: string,
-    to: string,
-    schema: string,
-    json: string
-  ];
+  export type InputTuple = [from: AddressLike, to: AddressLike, schema: string, json: string];
+  export type OutputTuple = [from: string, to: string, schema: string, json: string];
   export interface OutputObject {
     from: string;
     to: string;
@@ -71,14 +58,14 @@ export namespace MessageKVEvent {
     to: AddressLike,
     schema: string,
     fieldKeys: string[],
-    fieldValues: string[]
+    fieldValues: string[],
   ];
   export type OutputTuple = [
     from: string,
     to: string,
     schema: string,
     fieldKeys: string[],
-    fieldValues: string[]
+    fieldValues: string[],
   ];
   export interface OutputObject {
     from: string;
@@ -102,90 +89,72 @@ export interface MailboxDynamic extends BaseContract {
   queryFilter<TCEvent extends TypedContractEvent>(
     event: TCEvent,
     fromBlockOrBlockhash?: string | number | undefined,
-    toBlock?: string | number | undefined
+    toBlock?: string | number | undefined,
   ): Promise<Array<TypedEventLog<TCEvent>>>;
   queryFilter<TCEvent extends TypedContractEvent>(
     filter: TypedDeferredTopicFilter<TCEvent>,
     fromBlockOrBlockhash?: string | number | undefined,
-    toBlock?: string | number | undefined
+    toBlock?: string | number | undefined,
   ): Promise<Array<TypedEventLog<TCEvent>>>;
 
   on<TCEvent extends TypedContractEvent>(
     event: TCEvent,
-    listener: TypedListener<TCEvent>
+    listener: TypedListener<TCEvent>,
   ): Promise<this>;
   on<TCEvent extends TypedContractEvent>(
     filter: TypedDeferredTopicFilter<TCEvent>,
-    listener: TypedListener<TCEvent>
+    listener: TypedListener<TCEvent>,
   ): Promise<this>;
 
   once<TCEvent extends TypedContractEvent>(
     event: TCEvent,
-    listener: TypedListener<TCEvent>
+    listener: TypedListener<TCEvent>,
   ): Promise<this>;
   once<TCEvent extends TypedContractEvent>(
     filter: TypedDeferredTopicFilter<TCEvent>,
-    listener: TypedListener<TCEvent>
+    listener: TypedListener<TCEvent>,
   ): Promise<this>;
 
   listeners<TCEvent extends TypedContractEvent>(
-    event: TCEvent
+    event: TCEvent,
   ): Promise<Array<TypedListener<TCEvent>>>;
   listeners(eventName?: string): Promise<Array<Listener>>;
-  removeAllListeners<TCEvent extends TypedContractEvent>(
-    event?: TCEvent
-  ): Promise<this>;
+  removeAllListeners<TCEvent extends TypedContractEvent>(event?: TCEvent): Promise<this>;
 
   sendJson: TypedContractMethod<
     [to: AddressLike, schema: string, json: string],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
 
   sendKV: TypedContractMethod<
-    [
-      to: AddressLike,
-      schema: string,
-      fieldKeys: string[],
-      fieldValues: string[]
-    ],
+    [to: AddressLike, schema: string, fieldKeys: string[], fieldValues: string[]],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
 
-  getFunction<T extends ContractMethod = ContractMethod>(
-    key: string | FunctionFragment
-  ): T;
+  getFunction<T extends ContractMethod = ContractMethod>(key: string | FunctionFragment): T;
 
   getFunction(
-    nameOrSignature: "sendJson"
-  ): TypedContractMethod<
-    [to: AddressLike, schema: string, json: string],
-    [void],
-    "nonpayable"
-  >;
+    nameOrSignature: 'sendJson',
+  ): TypedContractMethod<[to: AddressLike, schema: string, json: string], [void], 'nonpayable'>;
   getFunction(
-    nameOrSignature: "sendKV"
+    nameOrSignature: 'sendKV',
   ): TypedContractMethod<
-    [
-      to: AddressLike,
-      schema: string,
-      fieldKeys: string[],
-      fieldValues: string[]
-    ],
+    [to: AddressLike, schema: string, fieldKeys: string[], fieldValues: string[]],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
 
   getEvent(
-    key: "MessageJSON"
+    key: 'MessageJSON',
   ): TypedContractEvent<
     MessageJSONEvent.InputTuple,
     MessageJSONEvent.OutputTuple,
     MessageJSONEvent.OutputObject
   >;
   getEvent(
-    key: "MessageKV"
+    key: 'MessageKV',
   ): TypedContractEvent<
     MessageKVEvent.InputTuple,
     MessageKVEvent.OutputTuple,
@@ -193,7 +162,7 @@ export interface MailboxDynamic extends BaseContract {
   >;
 
   filters: {
-    "MessageJSON(address,address,string,string)": TypedContractEvent<
+    'MessageJSON(address,address,string,string)': TypedContractEvent<
       MessageJSONEvent.InputTuple,
       MessageJSONEvent.OutputTuple,
       MessageJSONEvent.OutputObject
@@ -204,7 +173,7 @@ export interface MailboxDynamic extends BaseContract {
       MessageJSONEvent.OutputObject
     >;
 
-    "MessageKV(address,address,string,string[],string[])": TypedContractEvent<
+    'MessageKV(address,address,string,string[],string[])': TypedContractEvent<
       MessageKVEvent.InputTuple,
       MessageKVEvent.OutputTuple,
       MessageKVEvent.OutputObject

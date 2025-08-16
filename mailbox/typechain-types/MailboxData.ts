@@ -12,7 +12,7 @@ import type {
   ContractRunner,
   ContractMethod,
   Listener,
-} from "ethers";
+} from 'ethers';
 import type {
   TypedContractEvent,
   TypedDeferredTopicFilter,
@@ -20,19 +20,16 @@ import type {
   TypedLogDescription,
   TypedListener,
   TypedContractMethod,
-} from "./common";
+} from './common';
 
 export interface MailboxDataInterface extends Interface {
-  getFunction(nameOrSignature: "sendData"): FunctionFragment;
+  getFunction(nameOrSignature: 'sendData'): FunctionFragment;
 
-  getEvent(nameOrSignatureOrTopic: "MessageData"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: 'MessageData'): EventFragment;
 
-  encodeFunctionData(
-    functionFragment: "sendData",
-    values: [AddressLike, string]
-  ): string;
+  encodeFunctionData(functionFragment: 'sendData', values: [AddressLike, string]): string;
 
-  decodeFunctionResult(functionFragment: "sendData", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'sendData', data: BytesLike): Result;
 }
 
 export namespace MessageDataEvent {
@@ -58,56 +55,48 @@ export interface MailboxData extends BaseContract {
   queryFilter<TCEvent extends TypedContractEvent>(
     event: TCEvent,
     fromBlockOrBlockhash?: string | number | undefined,
-    toBlock?: string | number | undefined
+    toBlock?: string | number | undefined,
   ): Promise<Array<TypedEventLog<TCEvent>>>;
   queryFilter<TCEvent extends TypedContractEvent>(
     filter: TypedDeferredTopicFilter<TCEvent>,
     fromBlockOrBlockhash?: string | number | undefined,
-    toBlock?: string | number | undefined
+    toBlock?: string | number | undefined,
   ): Promise<Array<TypedEventLog<TCEvent>>>;
 
   on<TCEvent extends TypedContractEvent>(
     event: TCEvent,
-    listener: TypedListener<TCEvent>
+    listener: TypedListener<TCEvent>,
   ): Promise<this>;
   on<TCEvent extends TypedContractEvent>(
     filter: TypedDeferredTopicFilter<TCEvent>,
-    listener: TypedListener<TCEvent>
+    listener: TypedListener<TCEvent>,
   ): Promise<this>;
 
   once<TCEvent extends TypedContractEvent>(
     event: TCEvent,
-    listener: TypedListener<TCEvent>
+    listener: TypedListener<TCEvent>,
   ): Promise<this>;
   once<TCEvent extends TypedContractEvent>(
     filter: TypedDeferredTopicFilter<TCEvent>,
-    listener: TypedListener<TCEvent>
+    listener: TypedListener<TCEvent>,
   ): Promise<this>;
 
   listeners<TCEvent extends TypedContractEvent>(
-    event: TCEvent
+    event: TCEvent,
   ): Promise<Array<TypedListener<TCEvent>>>;
   listeners(eventName?: string): Promise<Array<Listener>>;
-  removeAllListeners<TCEvent extends TypedContractEvent>(
-    event?: TCEvent
-  ): Promise<this>;
+  removeAllListeners<TCEvent extends TypedContractEvent>(event?: TCEvent): Promise<this>;
 
-  sendData: TypedContractMethod<
-    [to: AddressLike, data: string],
-    [void],
-    "nonpayable"
-  >;
+  sendData: TypedContractMethod<[to: AddressLike, data: string], [void], 'nonpayable'>;
 
-  getFunction<T extends ContractMethod = ContractMethod>(
-    key: string | FunctionFragment
-  ): T;
+  getFunction<T extends ContractMethod = ContractMethod>(key: string | FunctionFragment): T;
 
   getFunction(
-    nameOrSignature: "sendData"
-  ): TypedContractMethod<[to: AddressLike, data: string], [void], "nonpayable">;
+    nameOrSignature: 'sendData',
+  ): TypedContractMethod<[to: AddressLike, data: string], [void], 'nonpayable'>;
 
   getEvent(
-    key: "MessageData"
+    key: 'MessageData',
   ): TypedContractEvent<
     MessageDataEvent.InputTuple,
     MessageDataEvent.OutputTuple,
@@ -115,7 +104,7 @@ export interface MailboxData extends BaseContract {
   >;
 
   filters: {
-    "MessageData(address,address,string)": TypedContractEvent<
+    'MessageData(address,address,string)': TypedContractEvent<
       MessageDataEvent.InputTuple,
       MessageDataEvent.OutputTuple,
       MessageDataEvent.OutputObject

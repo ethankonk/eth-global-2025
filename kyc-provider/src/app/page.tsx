@@ -1,20 +1,17 @@
-"use client";
-import { EthereumSVG } from "@/components/Svg";
-import { truncateAddress } from "@/utils";
-import {
-  faArrowUpRightFromSquare,
-  faPlus,
-} from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Button, Field, Label, Radio, RadioGroup } from "@headlessui/react";
+'use client';
+import { EthereumSVG } from '@/components/Svg';
+import { truncateAddress } from '@/utils';
+import { faArrowUpRightFromSquare, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Button, Field, Label, Radio, RadioGroup } from '@headlessui/react';
 import {
   AuthState,
   ClientState,
   useTurnkey,
   Wallet,
   WalletAccount,
-} from "@turnkey/react-wallet-kit";
-import { use, useEffect, useState } from "react";
+} from '@turnkey/react-wallet-kit';
+import { use, useEffect, useState } from 'react';
 
 export default function Home() {
   const {
@@ -29,41 +26,36 @@ export default function Home() {
 
   const [activeWallet, setActiveWallet] = useState<Wallet>(wallets[0]);
   const [activeAccount, setActiveAccount] = useState<WalletAccount | undefined>(
-    wallets[0]?.accounts[0]
+    wallets[0]?.accounts[0],
   );
-  const [providerIcon, setProviderIcon] = useState<string | undefined>(
-    undefined
-  );
+  const [providerIcon, setProviderIcon] = useState<string | undefined>(undefined);
 
   const [isFormValid, setIsFormValid] = useState(false);
 
   const [formFields, setFormFields] = useState({
-    name: "",
-    ssn: "",
-    homeAddress: "",
-    country: "",
-    state: "",
-    city: "",
+    name: '',
+    ssn: '',
+    homeAddress: '',
+    country: '',
+    state: '',
+    city: '',
   });
 
   useEffect(() => {
     const validateForm = (): boolean => {
       return (
-        formFields.name.trim() !== "" &&
-        formFields.homeAddress.trim() !== "" &&
-        formFields.country.trim() !== "" &&
-        formFields.state.trim() !== "" &&
-        formFields.city.trim() !== ""
+        formFields.name.trim() !== '' &&
+        formFields.homeAddress.trim() !== '' &&
+        formFields.country.trim() !== '' &&
+        formFields.state.trim() !== '' &&
+        formFields.city.trim() !== ''
       );
     };
     setIsFormValid(validateForm());
   }, [formFields]);
 
   useEffect(() => {
-    if (
-      authState === AuthState.Unauthenticated &&
-      clientState === ClientState.Ready
-    ) {
+    if (authState === AuthState.Unauthenticated && clientState === ClientState.Ready) {
       handleLogin();
     }
   }, [clientState]);
@@ -105,9 +97,7 @@ export default function Home() {
                       }}
                       className="hover:cursor-pointer group transition-all p-1 rounded-lg"
                     >
-                      <div
-                        className={`relative inline-flex items-center group`}
-                      >
+                      <div className={`relative inline-flex items-center group`}>
                         <div className="absolute -top-4 -translate-y-full left-1/2 z-50 -translate-x-1/2 mt-2 flex flex-col items-center w-full opacity-0 delay-500 group-active:delay-25 group-active:duration-0 group-active:opacity-100 transition-opacity pointer-events-none group-active:pointer-events-auto">
                           <div className="relative">
                             <p className="rounded-lg text-center bg-icon-background-dark text-icon-text-dark px-1 py-1 text-xs shadow-lg break-words">
@@ -125,10 +115,10 @@ export default function Home() {
                       className="hover:cursor-pointer"
                       onClick={() => {
                         window.open(
-                          account.addressFormat === "ADDRESS_FORMAT_ETHEREUM"
+                          account.addressFormat === 'ADDRESS_FORMAT_ETHEREUM'
                             ? `https://etherscan.io/address/${account.address}`
                             : `https://solscan.io/account/${account.address}`,
-                          "_blank"
+                          '_blank',
                         );
                       }}
                     >
@@ -150,8 +140,8 @@ export default function Home() {
             <Button
               onClick={async () => {
                 await createWalletAccounts({
-                  walletId: activeWallet?.walletId || "",
-                  accounts: ["ADDRESS_FORMAT_ETHEREUM"],
+                  walletId: activeWallet?.walletId || '',
+                  accounts: ['ADDRESS_FORMAT_ETHEREUM'],
                 });
               }}
               className="flex items-center justify-center w-full text-sm transition-all text-success-text-dark rounded-lg bg-success-dark p-2 hover:bg-success-dark/80"
@@ -168,37 +158,27 @@ export default function Home() {
           <FormInput
             label="Home Address *"
             value={formFields.homeAddress}
-            onChange={(value) =>
-              setFormFields({ ...formFields, homeAddress: value })
-            }
+            onChange={(value) => setFormFields({ ...formFields, homeAddress: value })}
           />
           <FormInput
             label="Country *"
             value={formFields.country}
-            onChange={(value) =>
-              setFormFields({ ...formFields, country: value })
-            }
+            onChange={(value) => setFormFields({ ...formFields, country: value })}
           />
           <div className="flex gap-4 w-full">
             <FormInput
               label="State *"
               value={formFields.state}
-              onChange={(value) =>
-                setFormFields({ ...formFields, state: value })
-              }
+              onChange={(value) => setFormFields({ ...formFields, state: value })}
             />
             <FormInput
               label="City *"
               value={formFields.city}
-              onChange={(value) =>
-                setFormFields({ ...formFields, city: value })
-              }
+              onChange={(value) => setFormFields({ ...formFields, city: value })}
             />
           </div>
           <hr className="border-icon-background-dark w-full" />
-          <h1 className="text-left w-full text-sm">
-            Level 2 Verification (optional)
-          </h1>
+          <h1 className="text-left w-full text-sm">Level 2 Verification (optional)</h1>
           <FormInput
             label="SSN"
             value={formFields.ssn}
@@ -208,7 +188,7 @@ export default function Home() {
             disabled={!isFormValid}
             className="flex items-center justify-center w-full text-sm transition-all text-success-text-dark rounded-lg bg-success-dark p-2 hover:bg-success-dark/80 disabled:bg-icon-background-dark hover:cursor-pointer"
           >
-            {formFields.ssn.trim() !== "" ? "Submit Level 2 KYC" : "Submit KYC"}
+            {formFields.ssn.trim() !== '' ? 'Submit Level 2 KYC' : 'Submit KYC'}
           </Button>
           <Button onClick={async () => await logout()}>Log out</Button>
         </div>

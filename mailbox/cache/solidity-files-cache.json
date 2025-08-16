@@ -22,20 +22,14 @@
                 "evm.methodIdentifiers",
                 "metadata"
               ],
-              "": [
-                "ast"
-              ]
+              "": ["ast"]
             }
           }
         }
       },
       "imports": [],
-      "versionPragmas": [
-        "^0.8.20"
-      ],
-      "artifacts": [
-        "MailboxDynamic"
-      ]
+      "versionPragmas": ["^0.8.20"],
+      "artifacts": ["MailboxDynamic"]
     }
   }
 }
