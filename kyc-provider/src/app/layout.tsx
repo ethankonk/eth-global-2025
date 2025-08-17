@@ -31,7 +31,7 @@ export default function RootLayout({
 }>) {
   const createSuborgParams: CreateSubOrgParams = {
     customWallet: {
-      walletName: 'Wallet 1',
+      walletName: 'Turnkey Wallet',
       walletAccounts: [
         {
           addressFormat: 'ADDRESS_FORMAT_ETHEREUM',

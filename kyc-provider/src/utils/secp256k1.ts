@@ -1,15 +1,13 @@
-// crypto/ecies-secp256k1.ts
 import * as secp from '@noble/secp256k1';
 import { bytesToHex } from '@noble/hashes/utils';
 
+const strip0x = (h: string) => (h.startsWith('0x') ? h.slice(2) : h);
 const hexToBytes = (h: string) =>
   Uint8Array.from(
-    (h.startsWith('0x') ? h.slice(2) : h).match(/.{1,2}/g)!.map((b) => parseInt(b, 16)),
+    strip0x(h)
+      .match(/.{1,2}/g)!
+      .map((b) => parseInt(b, 16)),
   );
-const toHex = (u8: Uint8Array) =>
-  Array.from(u8)
-    .map((x) => x.toString(16).padStart(2, '0'))
-    .join('');
 const fromUtf8 = (s: string) => new TextEncoder().encode(s);
 
 // BufferSource helpers for WebCrypto
@@ -34,25 +32,42 @@ async function hkdf(ikm: Uint8Array, salt: Uint8Array, info: Uint8Array, length:
 // Normalize to UNCOMPRESSED secp256k1 pubkey hex (0x04 + 64 bytes)
 export function normalizeSecp256k1Uncompressed(pubHex: string): string {
   const raw = hexToBytes(pubHex);
-  if (raw.length === 65 && raw[0] === 0x04) return '0x' + toHex(raw);
+  if (raw.length === 65 && raw[0] === 0x04) return '0x' + bytesToHex(raw);
   if (raw.length === 33 && (raw[0] === 0x02 || raw[0] === 0x03)) {
     const point = secp.Point.fromHex(raw);
     const uncompressed = point.toRawBytes(false); // 65B, 0x04…
-    return '0x' + toHex(uncompressed);
+    return '0x' + bytesToHex(uncompressed);
   }
   throw new Error('Unsupported secp256k1 public key format (need uncompressed or compressed).');
 }
 
+// Compress a 65B uncompressed point to 33B compressed.
+// NOTE: works for any short Weierstrass curve (incl. secp256k1).
+export function compressUncompressedPoint(uncompressed: Uint8Array): Uint8Array {
+  if (uncompressed.length !== 65 || uncompressed[0] !== 0x04) {
+    throw new Error('Invalid uncompressed EC public key');
+  }
+  const x = uncompressed.slice(1, 33);
+  const y = uncompressed.slice(33, 65);
+  const prefix = (y[31]! & 1) === 0 ? 0x02 : 0x03;
+  const compressed = new Uint8Array(33);
+  compressed[0] = prefix;
+  compressed.set(x, 1);
+  return compressed;
+}
+
+// small util
+export const toB64 = (u8: Uint8Array) => btoa(String.fromCharCode(...u8));
+export const toB64Url = (u8: Uint8Array) =>
+  toB64(u8).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+
 // ECIES (secp256k1 ECDH + HKDF-SHA256 + AES-GCM)
-export async function encryptSecp256k1({
-  recipientPubHexUncompressed, // 0x04 + 64 bytes
-  plaintext, // Uint8Array
-  aad, // optional Uint8Array
-}: {
-  recipientPubHexUncompressed: string;
+export async function encryptSecp256k1(params: {
+  recipientPubHexUncompressed: string; // 0x04 + 64 bytes (hex)
   plaintext: Uint8Array;
-  aad?: Uint8Array;
 }): Promise<Uint8Array> {
+  const { recipientPubHexUncompressed, plaintext } = params;
+
   const recipPub = hexToBytes(recipientPubHexUncompressed);
   if (recipPub.length !== 65 || recipPub[0] !== 0x04) {
     throw new Error(
@@ -65,7 +80,7 @@ export async function encryptSecp256k1({
   const ephPubCompressed = secp.getPublicKey(ephPriv, true); // 33B
 
   // 2) ECDH -> normalize to 32B key material
-  const shared = secp.getSharedSecret(ephPriv, recipPub, true); // noble may include prefix; use last 32B
+  const shared = secp.getSharedSecret(ephPriv, recipPub, true); // noble may include prefix; take last 32
   const ikmBuf = await crypto.subtle.digest('SHA-256', u8ToArrayBuffer(shared.slice(-32)));
   const ikm = new Uint8Array(ikmBuf);
 
@@ -73,7 +88,7 @@ export async function encryptSecp256k1({
   const info = fromUtf8('ecies-secp256k1:aes-gcm:v1');
   const okm = await hkdf(ikm, ephPubCompressed, info, 44);
   const aesKey = okm.slice(0, 32);
-  const iv = okm.slice(32, 44);
+  const iv = okm.slice(32, 44); // 12B
 
   // 4) AES-GCM encrypt
   const cryptoKey = await crypto.subtle.importKey(
@@ -84,7 +99,7 @@ export async function encryptSecp256k1({
     ['encrypt'],
   );
   const ctBuf = await crypto.subtle.encrypt(
-    { name: 'AES-GCM', iv: u8ToArrayBuffer(iv), additionalData: optAB(aad) },
+    { name: 'AES-GCM', iv: u8ToArrayBuffer(iv) },
     cryptoKey,
     u8ToArrayBuffer(plaintext),
   );
@@ -96,20 +111,4 @@ export async function encryptSecp256k1({
   out.set(iv, ephPubCompressed.length);
   out.set(ciphertext, ephPubCompressed.length + iv.length);
   return out;
-}
-
-// small util
-export const toB64 = (u8: Uint8Array) => btoa(String.fromCharCode(...u8));
-
-export function toUncompressedSecp256k1(pubHex: string): string {
-  const raw = hexToBytes(pubHex);
-  // already uncompressed (0x04 … 64-byte coords)
-  if (raw.length === 65 && raw[0] === 0x04) return '0x' + bytesToHex(raw);
-  // compressed (0x02/0x03 … 32-byte X)
-  if (raw.length === 33 && (raw[0] === 0x02 || raw[0] === 0x03)) {
-    const point = secp.Point.fromHex(raw); // parse compressed
-    const uncompressed = point.toRawBytes(false); // 65 bytes, starts 0x04
-    return '0x' + bytesToHex(uncompressed);
-  }
-  throw new Error('Invalid secp256k1 public key format');
 }

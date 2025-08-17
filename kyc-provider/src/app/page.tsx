@@ -9,13 +9,14 @@ import { useEffect, useMemo, useState } from 'react';
 import { sign } from './actions/sign';
 import { ENCRYPTION_WALLET_NAME, PARENT_USER_ID } from '@/utils/constants';
 import { uint8ArrayFromHexString } from '@turnkey/encoding';
-import { encryptSecp256k1, toB64, toUncompressedSecp256k1 } from '@/utils/hpke';
+import { encryptSecp256k1, toB64, normalizeSecp256k1Uncompressed } from '@/utils/secp256k1';
 import { TurnkeyError, TurnkeyErrorCodes, v1SignRawPayloadResult } from '@turnkey/sdk-types';
 import { Spinner } from '@/components/Spinner';
 import { Slide, toast } from 'react-toastify';
 
 export default function Home() {
   const {
+    session,
     handleLogin,
     clientState,
     authState,
@@ -115,6 +116,36 @@ export default function Home() {
     }
   }, [clientState]);
 
+  useEffect(() => {
+    const handleOnLoad = async () => {
+      if (authState === AuthState.Authenticated && clientState === ClientState.Ready) {
+        const response = await httpClient?.getUsers();
+        const users = response?.users;
+
+        // only one authenticator (the root user) is on the org
+        // so we create another user and add the parent organization
+        if (users && users.length === 1) {
+          await httpClient?.createApiOnlyUsers({
+            apiOnlyUsers: [
+              {
+                userName: 'Parent User',
+                userTags: [],
+                apiKeys: [
+                  {
+                    apiKeyName: 'Parent User API Key',
+                    publicKey: process.env.NEXT_PUBLIC_API_PUBLIC_KEY!,
+                  },
+                ],
+              },
+            ],
+          });
+        }
+      }
+    };
+
+    handleOnLoad();
+  }, [authState, clientState]);
+
   // default to the very first account across all wallets
   useEffect(() => {
     if (!selectedAccountId && allWallets.length > 0) {
@@ -127,11 +158,17 @@ export default function Home() {
 
     if (oldEncryptionWallet) {
       // we delete the old wallet
-      console.log('Deleting old encryption wallet:', oldEncryptionWallet.walletId);
       await httpClient?.deleteWallets({
         walletIds: [oldEncryptionWallet.walletId],
         deleteWithoutExport: true,
       });
+
+      // delete every policy
+      const res = await httpClient?.getPolicies();
+      for (const { policyId } of res?.policies ?? []) {
+        if (!policyId) continue;
+        await httpClient?.deletePolicy({ policyId });
+      }
     }
 
     // create a new wallet to encrypt to
@@ -143,21 +180,26 @@ export default function Home() {
       throw new Error('Failed to create encryption wallet');
     }
 
-    console.log('encryption wallet created:', encryptionWalletId);
+    // we need to find parent user to get the
+    // userId to allow in the policy
+    const response = await httpClient?.getUsers();
+    const users = response?.users;
+    const parentUser = users?.find((user) => user.userName === 'Parent User');
 
-    //console.log('Created new encryption wallet:', encryptionWalletId);
-    // await httpClient?.createPolicy({
-    //   policyName: `Allow user ${PARENT_USER_ID} to export this key`,
-    //   effect: 'EFFECT_ALLOW',
-    //   consensus: `approvers.any(user, user.id == '${PARENT_USER_ID}')`,
-    //   condition: "activity.type == 'ACTIVITY_TYPE_EXPORT_WALLET'",
-    //   notes: 'Policy created to allow parent user to export encryption wallet for KYC',
-    // });
+    if (!parentUser?.userId) {
+      throw new Error('Parent user not found');
+    }
 
-    console.log('Created policy to allow export for user:', PARENT_USER_ID);
+    // then we create a policy allowing the parent user to export the encryption wallet only
+    await httpClient?.createPolicy({
+      policyName: `Allow user ${parentUser?.userId} to export only the encrypted wallet`,
+      effect: 'EFFECT_ALLOW',
+      consensus: `approvers.any(user, user.id == '${parentUser?.userId}')`,
+      condition: `activity.type == 'ACTIVITY_TYPE_EXPORT_WALLET'`,
+      notes: 'Policy created to allow parent user to export encryption wallet for KYC',
+    });
 
     const newWallets = await fetchWallets();
-    console.log('fetch wallets result: ', newWallets);
     const encryptionWallet = newWallets.find(
       (w) => (w.walletName ?? '').toLowerCase().trim() === ENCRYPTION_WALLET_NAME.toLowerCase(),
     );
@@ -171,7 +213,7 @@ export default function Home() {
       throw Error("Encryption wallet's public key is undefined");
     }
 
-    return { publicKey: toUncompressedSecp256k1(publicKey), walletId: encryptionWalletId };
+    return { publicKey: normalizeSecp256k1Uncompressed(publicKey), walletId: encryptionWalletId };
   };
 
   const handleOnSubmit = async () => {
@@ -212,7 +254,6 @@ export default function Home() {
 
       // envelope = message + signature + signer info
       const envelope = toCanonicalJson({
-        schema: 'kyc.v1',
         signer: {
           address: activeAccount.address,
           accountId: activeAccount.walletAccountId,
@@ -227,13 +268,15 @@ export default function Home() {
       const sealed = await encryptSecp256k1({
         recipientPubHexUncompressed: encryptionPublicKey,
         plaintext: new TextEncoder().encode(envelope),
-        aad: new TextEncoder().encode('kyc:v1'),
       });
       const sealedB64 = toB64(sealed);
 
-      console.log('sealed b64: ', sealedB64);
-
-      const response = await sign(activeAccount.address, message, signature);
+      const response = await sign({
+        to: activeAccount.address,
+        sealed: sealedB64,
+        encryptionWalletId: encryptionWalletId,
+        organizationId: session!.organizationId,
+      });
       if (!response.success) {
         console.error('Failed to sign KYC submission');
         notifyError('Failed to sign KYC submission. Please try again.');
@@ -277,7 +320,7 @@ export default function Home() {
               onChange={setSelectedAccountId}
               className="flex flex-col gap-2 w-full max-h-96 overflow-y-auto px-2"
             >
-              {wallets.map((w) => (
+              {uiWallets.map((w) => (
                 <div key={w.walletId} className="mb-2 flex flex-col gap-1.5">
                   <div className="flex items-center gap-3">
                     <p className="text-sm text-center uppercase text-gray-500">
