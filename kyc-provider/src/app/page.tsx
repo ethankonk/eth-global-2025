@@ -7,27 +7,26 @@ import { Button, Field, Label, Radio, RadioGroup } from '@headlessui/react';
 import { AuthState, ClientState, useTurnkey, WalletSource } from '@turnkey/react-wallet-kit';
 import { useEffect, useMemo, useState } from 'react';
 import { sign } from './actions/sign';
-import { ENCRYPTION_WALLET_NAME, PARENT_USER_ID } from '@/utils/constants';
-import { uint8ArrayFromHexString } from '@turnkey/encoding';
-import { encryptSecp256k1, toB64, normalizeSecp256k1Uncompressed } from '@/utils/secp256k1';
-import { TurnkeyError, TurnkeyErrorCodes, v1SignRawPayloadResult } from '@turnkey/sdk-types';
+import { ENCRYPTION_WALLET_NAME } from '@/utils/constants';
+import { TurnkeyErrorCodes, v1SignRawPayloadResult } from '@turnkey/sdk-types';
 import { Spinner } from '@/components/Spinner';
 import { Slide, toast } from 'react-toastify';
+import { base64FromBytes, encryptSecp256k1, normalizeSecp256k1Uncompressed } from '@/utils/crypto';
 
 export default function Home() {
   const {
     session,
-    handleLogin,
     clientState,
     authState,
     wallets,
+    httpClient,
+    handleLogin,
     logout,
     createWalletAccounts,
     handleLinkExternalWallet,
     signMessage,
     createWallet,
     fetchWallets,
-    httpClient,
   } = useTurnkey();
 
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
@@ -163,7 +162,8 @@ export default function Home() {
         deleteWithoutExport: true,
       });
 
-      // delete every policy
+      // we delete every policy
+      // this should only ever be one
       const res = await httpClient?.getPolicies();
       for (const { policyId } of res?.policies ?? []) {
         if (!policyId) continue;
@@ -173,7 +173,7 @@ export default function Home() {
 
     // create a new wallet to encrypt to
     const encryptionWalletId = await createWallet({
-      walletName: 'encryption-wallet',
+      walletName: ENCRYPTION_WALLET_NAME,
       accounts: ['ADDRESS_FORMAT_ETHEREUM'],
     });
     if (!encryptionWalletId) {
@@ -224,7 +224,6 @@ export default function Home() {
     const { publicKey: encryptionPublicKey, walletId: encryptionWalletId } =
       await ensureEncryptionWalletAndGetKey();
 
-    // lightweight nonce
     const nonce = crypto.getRandomValues(new Uint32Array(1))[0].toString(16);
 
     const payload = {
@@ -252,7 +251,7 @@ export default function Home() {
         addEthereumPrefix: true,
       });
 
-      // envelope = message + signature + signer info
+      // envelope = message, signature, and signer info
       const envelope = toCanonicalJson({
         signer: {
           address: activeAccount.address,
@@ -264,12 +263,12 @@ export default function Home() {
         signature,
       });
 
-      // Encrypt envelope to the secp256k1 recipient key
+      // we encrypt envelope to the secp256k1 recipient key
       const sealed = await encryptSecp256k1({
         recipientPubHexUncompressed: encryptionPublicKey,
         plaintext: new TextEncoder().encode(envelope),
       });
-      const sealedB64 = toB64(sealed);
+      const sealedB64 = base64FromBytes(sealed);
 
       const response = await sign({
         to: activeAccount.address,
@@ -502,8 +501,4 @@ function FormInput({
       />
     </div>
   );
-}
-
-function signJson(address: string, message: string, signature: v1SignRawPayloadResult) {
-  throw new Error('Function not implemented.');
 }
