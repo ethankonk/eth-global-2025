@@ -8,9 +8,11 @@ import {
   TurnkeyProviderConfig,
 } from '@turnkey/react-wallet-kit';
 import '@turnkey/react-wallet-kit/dist/styles.css';
-import Image from 'next/image';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHeart } from '@fortawesome/free-solid-svg-icons';
+import { Slide, toast, ToastContainer } from 'react-toastify';
+import { TurnkeyError, TurnkeyErrorCodes } from '@turnkey/sdk-types';
+import { Button } from '@headlessui/react';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -99,12 +101,54 @@ export default function RootLayout({
     },
   };
 
+  const notifyError = (message: string) => {
+      toast.error(message, {
+        position: 'bottom-right',
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: false,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: 'dark',
+        transition: Slide,
+      });
+    };
+
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen p-6 flex flex-col items-center justify-center relative`}
       >
-        <TurnkeyProvider config={config}>{children}</TurnkeyProvider>
+        <TurnkeyProvider callbacks={
+          {
+            onError: (error) => {
+              console.error('Turnkey Error:', error.code);
+              switch (error.code) {
+                case TurnkeyErrorCodes.UNKNOWN:
+                  notifyError('Failed to sign message. Signatures exhausted.');
+                  break;
+                default:
+                  notifyError('Turnkey Error: ' + error.message);
+                  break;
+              }
+          }
+        }
+        } config={config}>{children}</TurnkeyProvider>
+        <ToastContainer
+          position="bottom-right"
+          autoClose={5000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick={false}
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="dark"
+          transition={Slide}
+          className={'relative z-50'}
+        />
         <footer className="flex gap-[24px] flex-wrap items-center justify-center absolute z-50 bottom-2 left-1/2 -translate-x-1/2">
           <p className="text-neutral-300 flex items-center gap-2">
             Made with Zyns, Celsius, and no time
