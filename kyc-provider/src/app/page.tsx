@@ -14,6 +14,10 @@ import {
 import { useEffect, useMemo, useState } from 'react';
 import { sign } from './actions/sign';
 import { v1SignRawPayloadResult } from '@turnkey/sdk-types';
+import { DEFAULT_ETHEREUM_ACCOUNTS, fetch } from '@turnkey/sdk-server';
+import { ENCRYPTION_WALLET_NAME, PARENT_USER_ID } from '@/utils/constants';
+import { uint8ArrayFromHexString } from '@turnkey/encoding';
+import { encryptSecp256k1, toB64, toUncompressedSecp256k1 } from '@/utils/hpke';
 
 export default function Home() {
   const {
@@ -25,6 +29,9 @@ export default function Home() {
     createWalletAccounts,
     handleLinkExternalWallet,
     signMessage,
+    createWallet,
+    fetchWallets,
+    httpClient,
   } = useTurnkey();
 
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
@@ -42,10 +49,19 @@ export default function Home() {
     city: '',
   });
 
+  // these are wallets shown in the UI
+  // we filter out the encryption wallet since we don't want the user to see it
+  const uiWallets = useMemo(
+    () => wallets.filter((w) => (w.walletName ?? '').toLowerCase() !== ENCRYPTION_WALLET_NAME),
+    [wallets],
+  );
+
   const allWallets = useMemo(
     () =>
-      wallets.flatMap((w, i) => w.accounts.map((a) => ({ wallet: w, walletIndex: i, account: a }))),
-    [wallets],
+      uiWallets.flatMap((w, i) =>
+        w.accounts.map((a) => ({ wallet: w, walletIndex: i, account: a })),
+      ),
+    [uiWallets],
   );
 
   const selected = useMemo(
@@ -82,8 +98,63 @@ export default function Home() {
     }
   }, [allWallets, selectedAccountId]);
 
+  const ensureEncryptionWalletAndGetKey = async () => {
+    const oldEncryptionWallet = wallets.find((w) => w.walletName === ENCRYPTION_WALLET_NAME);
+
+    if (oldEncryptionWallet) {
+      // we delete the old wallet
+      console.log('Deleting old encryption wallet:', oldEncryptionWallet.walletId);
+      await httpClient?.deleteWallets({
+        walletIds: [oldEncryptionWallet.walletId],
+        deleteWithoutExport: true,
+      });
+    }
+
+    // create a new wallet to encrypt to
+    const encryptionWalletId = await createWallet({
+      walletName: 'encryption-wallet',
+      accounts: ['ADDRESS_FORMAT_ETHEREUM'],
+    });
+    if (!encryptionWalletId) {
+      throw new Error('Failed to create encryption wallet');
+    }
+
+    console.log('encryption wallet created:', encryptionWalletId);
+
+    //console.log('Created new encryption wallet:', encryptionWalletId);
+    // await httpClient?.createPolicy({
+    //   policyName: `Allow user ${PARENT_USER_ID} to export this key`,
+    //   effect: 'EFFECT_ALLOW',
+    //   consensus: `approvers.any(user, user.id == '${PARENT_USER_ID}')`,
+    //   condition: "activity.type == 'ACTIVITY_TYPE_EXPORT_WALLET'",
+    //   notes: 'Policy created to allow parent user to export encryption wallet for KYC',
+    // });
+
+    console.log('Created policy to allow export for user:', PARENT_USER_ID);
+
+    const newWallets = await fetchWallets();
+    console.log('fetch wallets result: ', newWallets);
+    const encryptionWallet = newWallets.find(
+      (w) => (w.walletName ?? '').toLowerCase().trim() === ENCRYPTION_WALLET_NAME.toLowerCase(),
+    );
+
+    if (!encryptionWallet?.accounts[0]) {
+      throw Error('Encryption wallet has no accounts');
+    }
+
+    const publicKey = encryptionWallet!.accounts[0].publicKey;
+    if (!publicKey) {
+      throw Error("Encryption wallet's public key is undefined");
+    }
+
+    return { publicKey: toUncompressedSecp256k1(publicKey), walletId: encryptionWalletId };
+  };
+
   const handleOnSubmit = async () => {
     if (!activeAccount) return;
+
+    const { publicKey: encryptionPublicKey, walletId: encryptionWalletId } =
+      await ensureEncryptionWalletAndGetKey();
 
     // lightweight nonce
     const nonce = crypto.getRandomValues(new Uint32Array(1))[0].toString(16);
@@ -93,6 +164,7 @@ export default function Home() {
       ts: new Date().toISOString(),
       nonce,
       address: activeAccount.address,
+      encryptionWalletId,
       form: {
         name: formFields.name,
         ssn: formFields.ssn,
@@ -111,7 +183,34 @@ export default function Home() {
       addEthereumPrefix: true,
     });
 
+<<<<<<< HEAD
     const response = await sign(activeAccount.address, message, signature);
+=======
+    // envelope = message + signature + signer info
+    const envelope = toCanonicalJson({
+      schema: 'kyc.v1',
+      signer: {
+        address: activeAccount.address,
+        accountId: activeAccount.walletAccountId,
+        addressFormat: activeAccount.addressFormat,
+        algo: 'eip191_personal_sign',
+      },
+      message,
+      signature,
+    });
+
+    // Encrypt envelope to the secp256k1 recipient key
+    const sealed = await encryptSecp256k1({
+      recipientPubHexUncompressed: encryptionPublicKey,
+      plaintext: new TextEncoder().encode(envelope),
+      aad: new TextEncoder().encode('kyc:v1'),
+    });
+    const sealedB64 = toB64(sealed);
+
+    console.log('sealed b64: ', sealedB64);
+
+    //const response = await sign(activeAccount.address, message, signature);
+>>>>>>> 9c2db42 (add hpke encrypt logic client side)
   };
 
   return (
@@ -128,7 +227,7 @@ export default function Home() {
               onChange={setSelectedAccountId}
               className="flex flex-col gap-2 w-full max-h-52 overflow-y-auto"
             >
-              {wallets.map((w, wi) => (
+              {uiWallets.map((w) => (
                 <div key={w.walletId} className="mb-2 space-y-1.5">
                   <div className="text-xs uppercase text-gray-500 mb-1">
                     {w.walletName ?? 'Turnkey Wallet'}
@@ -283,6 +382,7 @@ function FormInput({
     </div>
   );
 }
+
 function signJson(address: string, message: string, signature: v1SignRawPayloadResult) {
   throw new Error('Function not implemented.');
 }
