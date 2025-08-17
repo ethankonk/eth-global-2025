@@ -183,9 +183,6 @@ export default function Home() {
       addEthereumPrefix: true,
     });
 
-<<<<<<< HEAD
-    const response = await sign(activeAccount.address, message, signature);
-=======
     // envelope = message + signature + signer info
     const envelope = toCanonicalJson({
       schema: 'kyc.v1',
@@ -209,8 +206,7 @@ export default function Home() {
 
     console.log('sealed b64: ', sealedB64);
 
-    //const response = await sign(activeAccount.address, message, signature);
->>>>>>> 9c2db42 (add hpke encrypt logic client side)
+    // const response = await sign(activeAccount.address, message, signature);
   };
 
   return (
