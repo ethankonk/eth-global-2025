@@ -7,6 +7,11 @@ This is achieved by passing KYC verification through a trusted provider which, o
 
 Other services that require KYC can then check this on-chain proof to confirm the wallet address has already been verified, removing the need for repeated KYC checks.
 
+### Try It Yourself!
+- Login to our mock KYC provider: https://ethglobal-kyc-provider.vercel.app/
+  - Verify your wallet address
+- Paste the wallet address you verified on our mock KYC verifier: https://ethglobal-kyc-verifier.vercel.app/
+
 ---
 
 ## How It Works
