@@ -51,8 +51,6 @@ export async function sign(to: string, payload: string, signedPayload: v1SignRaw
 
     const tx = await mailboxContract.sendJson(to, schema, signature);
 
-
-
     const receipt = await tx.wait();
 
     return {
@@ -65,4 +63,3 @@ export async function sign(to: string, payload: string, signedPayload: v1SignRaw
     throw error;
   }
 }
-

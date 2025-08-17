@@ -1,87 +1,66 @@
-"use server";
+'use server';
 
-import { ethers } from "ethers";
+import { ethers } from 'ethers';
 
 const RPC_URL = process.env.RPC_URL!;
 const MAILBOX = process.env.NEXT_PUBLIC_MAILBOX_ADDRESS!;
-const START_BLOCK = Number(process.env.MAILBOX_START_BLOCK ?? 0);
-const MAX_SPAN = Number(process.env.MAX_LOG_BLOCK_SPAN ?? 30);
-
-const ABI = [
-  "event MessageJSON(address indexed from, address indexed to, string schema, string json)",
-  "event MessageKV(address indexed from, address indexed to, string schema, string[] fieldKeys, string[] fieldValues)",
-];
-const iface = new ethers.Interface(ABI);
 
 const provider = new ethers.JsonRpcProvider(RPC_URL);
 
-// format address for topic filtering
-function addrTopic(addr: string) {
-  return ethers.zeroPadValue(ethers.getAddress(addr), 32);
-}
-
-// verify if wallet has ever interacted with MAILBOX
 export async function verify(
-  wallet: string
+  wallet: string,
 ): Promise<{ ok: true; isVerified: boolean; level?: string } | { ok: false; error: string }> {
   try {
     if (!/^0x[a-fA-F0-9]{40}$/.test(wallet)) {
-      return { ok: false, error: "Invalid EVM address" };
+      return { ok: false, error: 'Invalid EVM address' };
     }
+
+    const contract = new ethers.Contract(
+      MAILBOX,
+      ['event MessageJSON(address indexed from, address indexed to, string schema, string json)'],
+      provider,
+    );
 
     const latest = await provider.getBlockNumber();
-    let to = latest;
-    const from = START_BLOCK || 0;
+    // Expand range to cover transactions from the last 3000 blocks
+    const fromBlock = latest - 2000;
 
-    const eventSigs = [
-      ethers.id("MessageJSON(address,address,string,string)"),
-      ethers.id("MessageKV(address,address,string,string[],string[])"),
-    ];
+    // Check in chunks of 30 blocks to stay within limits
+    for (let toBlock = latest; toBlock >= fromBlock; toBlock -= 30) {
+      const chunkFromBlock = Math.max(fromBlock, toBlock - 29);
 
-    // scan in chunks, but only ask for logs involving this wallet
-    while (to >= from) {
-      const span = Math.min(MAX_SPAN, to - from + 1);
-      const fromBlock = to - span + 1;
+      try {
+        const allEvents = await contract.queryFilter(
+          contract.filters.MessageJSON(),
+          chunkFromBlock,
+          toBlock,
+        );
 
-      // logs where wallet is "from"
-      const filterFrom = {
-        address: MAILBOX,
-        fromBlock,
-        toBlock: to,
-        topics: [eventSigs, addrTopic(wallet)],
-      };
+        if (allEvents.length > 0) {
+          // Check if any events match our wallet
+          const matchingEvents = allEvents.filter(
+            (event) => event.args.from.toLowerCase() === wallet.toLowerCase(),
+          );
 
-      // logs where wallet is "to"
-      const filterTo = {
-        address: MAILBOX,
-        fromBlock,
-        toBlock: to,
-        topics: [eventSigs, null, addrTopic(wallet)],
-      };
+          if (matchingEvents.length > 0) {
+            const event = matchingEvents[0];
 
-      const logsFrom = await provider.getLogs(filterFrom);
-      const logsTo = await provider.getLogs(filterTo);
-      const logs = [...logsFrom, ...logsTo];
-
-      if (logs.length > 0) {
-        try {
-          const parsed = iface.parseLog(logs[0]);
-          return {
-            ok: true,
-            isVerified: true,
-            level: parsed?.args?.schema || "1",
-          };
-        } catch {
-          return { ok: true, isVerified: true, level: "1" };
+            return {
+              ok: true,
+              isVerified: true,
+              level: event.args.schema || 'unknown',
+            };
+          }
         }
+      } catch (chunkError) {
+        console.log(`Error in chunk ${chunkFromBlock}-${toBlock}:`, chunkError.message);
       }
-
-      // move backwards
-      to = fromBlock - 1;
     }
 
+    console.log('No matching events found in any chunk');
     return { ok: true, isVerified: false };
   } catch (e: any) {
-    return { ok: false, error: e.message ?? "Unknown error" };
+    console.error('Error:', e?.message);
+    return { ok: false, error: 'Check failed' };
   }
 }
