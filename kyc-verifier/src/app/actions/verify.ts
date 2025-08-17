@@ -4,7 +4,7 @@ import { ethers } from 'ethers';
 
 const RPC_URL = process.env.RPC_URL!;
 const MAILBOX = process.env.NEXT_PUBLIC_MAILBOX_ADDRESS!;
-
+const TRUSTED_WALLET = process.env.TRUSTED_WALLET!;
 const provider = new ethers.JsonRpcProvider(RPC_URL);
 
 export async function verify(
@@ -22,8 +22,7 @@ export async function verify(
     );
 
     const latest = await provider.getBlockNumber();
-    // Expand range to cover transactions from the last 3000 blocks
-    const fromBlock = latest - 2000;
+    const fromBlock = latest - 4000;
 
     // Check in chunks of 30 blocks to stay within limits
     for (let toBlock = latest; toBlock >= fromBlock; toBlock -= 30) {
@@ -39,7 +38,9 @@ export async function verify(
         if (allEvents.length > 0) {
           // Check if any events match our wallet
           const matchingEvents = allEvents.filter(
-            (event) => event.args.from.toLowerCase() === wallet.toLowerCase(),
+            (event) =>
+              event.args.to.toLowerCase() === wallet.toLowerCase() &&
+              event.args.from.toLowerCase() === TRUSTED_WALLET.toLowerCase(),
           );
 
           if (matchingEvents.length > 0) {
