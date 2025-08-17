@@ -20,6 +20,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <title>KYC Verifier</title>
+        <link rel="icon" href="/favicon.png" type="image/png" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen p-6 flex flex-col items-center justify-center relative`}
       >
@@ -30,7 +34,7 @@ export default function RootLayout({
         <footer className="flex gap-[24px] flex-wrap items-center justify-center absolute z-50 bottom-2 left-1/2 -translate-x-1/2">
           <p className="text-neutral-300 flex items-center gap-2">
             Made with Zyns, Celsius, and no time
-            <FontAwesomeIcon icon={faHeart} className="text-red-500 text-base w-5 h-5" />
+            <FontAwesomeIcon icon={faHeart} className="text-red-500/60 text-base w-5 h-5" />
           </p>
         </footer>
       </body>

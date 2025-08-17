@@ -71,17 +71,19 @@ export default function Home() {
           </button>
         </div>
 
-        {error && <p className="text-red-600 text-center">Sorry an error occured</p>}
+        {error && (
+          <p className="text-danger-dark text-center">{error ?? 'Sorry an error occured'}</p>
+        )}
 
         {isVerified === true && (
-          <div className="text-green-200 text-center">
+          <div className="text-success-dark text-center">
             <p>Address has undergone KYC!</p>
             {level && <p className="text-sm">Level: {level}</p>}
           </div>
         )}
 
         {isVerified === false && (
-          <p className="text-red-200 text-center">Address has not undergone KYC.</p>
+          <p className="text-danger-dark text-center">Address has not undergone KYC.</p>
         )}
       </div>
     </main>
