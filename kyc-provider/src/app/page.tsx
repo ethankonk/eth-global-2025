@@ -178,9 +178,9 @@ export default function Home() {
     if (!activeAccount) return;
 
     setIsLoading(true);
-    
+
     const { publicKey: encryptionPublicKey, walletId: encryptionWalletId } =
-    await ensureEncryptionWalletAndGetKey();
+      await ensureEncryptionWalletAndGetKey();
 
     // lightweight nonce
     const nonce = crypto.getRandomValues(new Uint32Array(1))[0].toString(16);
@@ -210,28 +210,28 @@ export default function Home() {
         addEthereumPrefix: true,
       });
 
-    // envelope = message + signature + signer info
-    const envelope = toCanonicalJson({
-      schema: 'kyc.v1',
-      signer: {
-        address: activeAccount.address,
-        accountId: activeAccount.walletAccountId,
-        addressFormat: activeAccount.addressFormat,
-        algo: 'eip191_personal_sign',
-      },
-      message,
-      signature,
-    });
+      // envelope = message + signature + signer info
+      const envelope = toCanonicalJson({
+        schema: 'kyc.v1',
+        signer: {
+          address: activeAccount.address,
+          accountId: activeAccount.walletAccountId,
+          addressFormat: activeAccount.addressFormat,
+          algo: 'eip191_personal_sign',
+        },
+        message,
+        signature,
+      });
 
-    // Encrypt envelope to the secp256k1 recipient key
-    const sealed = await encryptSecp256k1({
-      recipientPubHexUncompressed: encryptionPublicKey,
-      plaintext: new TextEncoder().encode(envelope),
-      aad: new TextEncoder().encode('kyc:v1'),
-    });
-    const sealedB64 = toB64(sealed);
+      // Encrypt envelope to the secp256k1 recipient key
+      const sealed = await encryptSecp256k1({
+        recipientPubHexUncompressed: encryptionPublicKey,
+        plaintext: new TextEncoder().encode(envelope),
+        aad: new TextEncoder().encode('kyc:v1'),
+      });
+      const sealedB64 = toB64(sealed);
 
-    console.log('sealed b64: ', sealedB64);
+      console.log('sealed b64: ', sealedB64);
 
       const response = await sign(activeAccount.address, message, signature);
       if (!response.success) {
@@ -261,7 +261,12 @@ export default function Home() {
         <Spinner className="h-20 w-20" />
       ) : authState === AuthState.Unauthenticated ? (
         <div>
-          <Button className="absolute w-screen h-screen top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" onClick={handleLogin}>Click anywhere to login</Button>
+          <Button
+            className="absolute w-screen h-screen top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
+            onClick={handleLogin}
+          >
+            Click anywhere to login
+          </Button>
         </div>
       ) : (
         <div className="flex gap-10">

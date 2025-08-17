@@ -102,26 +102,26 @@ export default function RootLayout({
   };
 
   const notifyError = (message: string) => {
-      toast.error(message, {
-        position: 'bottom-right',
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: false,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: 'dark',
-        transition: Slide,
-      });
-    };
+    toast.error(message, {
+      position: 'bottom-right',
+      autoClose: 5000,
+      hideProgressBar: false,
+      closeOnClick: false,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+      theme: 'dark',
+      transition: Slide,
+    });
+  };
 
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen p-6 flex flex-col items-center justify-center relative`}
       >
-        <TurnkeyProvider callbacks={
-          {
+        <TurnkeyProvider
+          callbacks={{
             onError: (error) => {
               console.error('Turnkey Error:', error.code);
               switch (error.code) {
@@ -132,9 +132,12 @@ export default function RootLayout({
                   notifyError('Turnkey Error: ' + error.message);
                   break;
               }
-          }
-        }
-        } config={config}>{children}</TurnkeyProvider>
+            },
+          }}
+          config={config}
+        >
+          {children}
+        </TurnkeyProvider>
         <ToastContainer
           position="bottom-right"
           autoClose={5000}
