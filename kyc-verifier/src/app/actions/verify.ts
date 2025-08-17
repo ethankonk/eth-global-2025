@@ -37,11 +37,14 @@ export async function verify(
 
         if (allEvents.length > 0) {
           // Check if any events match our wallet
-          const matchingEvents = allEvents.filter(
-            (event) =>
-              event.args.to.toLowerCase() === wallet.toLowerCase() &&
-              event.args.from.toLowerCase() === TRUSTED_WALLET.toLowerCase(),
-          );
+
+          const matchingEvents = allEvents
+            .filter((event): event is ethers.EventLog => 'args' in event)
+            .filter(
+              (event) =>
+                event.args.to.toLowerCase() === wallet.toLowerCase() &&
+                event.args.from.toLowerCase() === TRUSTED_WALLET.toLowerCase(),
+            );
 
           if (matchingEvents.length > 0) {
             const event = matchingEvents[0];
@@ -53,8 +56,8 @@ export async function verify(
             };
           }
         }
-      } catch (chunkError) {
-        console.log(`Error in chunk ${chunkFromBlock}-${toBlock}:`, chunkError.message);
+      } catch (chunkError: any) {
+        console.warn(`Error in chunk ${chunkFromBlock}-${toBlock}:`, chunkError?.message);
       }
     }
 
