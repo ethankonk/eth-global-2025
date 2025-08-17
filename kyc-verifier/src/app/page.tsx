@@ -61,12 +61,13 @@ export default function Home() {
           <button
             onClick={handleVerify}
             disabled={!address || isLoading}
-            className="border-2 border-white/50 text-white px-6 py-2 rounded-md disabled:cursor-not-allowed w-full flex items-center justify-center gap-2"
+            className="border-2 border-white/50 text-white px-6 py-2 rounded-md disabled:cursor-not-allowed w-full flex items-center justify-center gap-2 h-[44px]"
           >
-            {isLoading && (
-              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+            {isLoading ? (
+              <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+            ) : (
+              'Verify'
             )}
-            {isLoading ? 'Verifying...' : 'Verify'}
           </button>
         </div>
 
