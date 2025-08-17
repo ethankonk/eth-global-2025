@@ -112,7 +112,6 @@ export default function Home() {
     });
 
     const response = await sign(activeAccount.address, message, signature);
-
   };
 
   return (
@@ -287,4 +286,3 @@ function FormInput({
 function signJson(address: string, message: string, signature: v1SignRawPayloadResult) {
   throw new Error('Function not implemented.');
 }
-
